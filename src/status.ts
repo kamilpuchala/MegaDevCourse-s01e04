@@ -3,7 +3,7 @@ import type { RigConfig } from './config.js';
 import { lastBeat, type Beat } from './heartbeat.js';
 import { readNight } from './digest/reader.js';
 
-export type Night = {
+export type NightSummary = {
   night: string;
   ok: number;
   retry: number;
@@ -14,7 +14,7 @@ export type Status = {
   adapter: string;
   installed: string;
   lastBeat: Beat | null;
-  nights: Night[];
+  nights: NightSummary[];
 };
 
 // Nights on disk = runs/<YYYY-MM-DD>.jsonl, newest first.

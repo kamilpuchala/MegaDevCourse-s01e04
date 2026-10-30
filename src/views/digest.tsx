@@ -22,7 +22,7 @@ export function DigestPage({ night }: { night: Night }) {
           </thead>
           <tbody>
             {night.rows.map((row) => (
-              <tr class={row.retries >= 3 || row.lastStatus === 'fail' ? 'warn' : ''}>
+              <tr class={row.retries >= 3 || row.lastStatus === 'fail' ? 'warn' : undefined}>
                 <td>{row.job}</td>
                 <td>{row.owner ?? '—'}</td>
                 <td>{row.runs}</td>
