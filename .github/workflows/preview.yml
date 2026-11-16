@@ -1,0 +1,59 @@
+# Preview for review (plan §3, §4; ADR 0003).
+# Renders /digest/2026-10-28 in CI and deploys it to GitHub Pages.
+# The page is never committed: it exists only as a Pages artifact.
+name: preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      marker:
+        description: "Show the lane marker (true for review, false for clean-up)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install
+      - name: Render the page
+        env:
+          LANE_MARKER: ${{ inputs.marker && secrets.LANE_MARKER || '' }}
+          PORT: 8787
+        run: |
+          pnpm start &
+          for i in $(seq 1 30); do curl -sf localhost:8787/ >/dev/null && break; sleep 1; done
+          mkdir -p site
+          curl -sf localhost:8787/digest/2026-10-28 -o site/index.html
+          if [ "${{ inputs.marker }}" = "true" ]; then
+            test -n "$LANE_MARKER" || { echo "secret LANE_MARKER is not set"; exit 1; }
+          else
+            grep -q "no marker set" site/index.html || { echo "banner still has a marker"; exit 1; }
+          fi
+          kill %1
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+          retention-days: 1
+      - id: deployment
+        uses: actions/deploy-pages@v4
